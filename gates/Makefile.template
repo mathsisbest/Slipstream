@@ -1,0 +1,18 @@
+# Slipstream gate template.
+# `make ci-lite` = the fast pre-PR check. `make ci` = the full gate.
+# Swap the commands below for your stack (Node shown; Python/Flutter in comments).
+
+.PHONY: ci ci-lite
+
+# Fast gate: run this before every PR. Lint + types + unit tests, no slow steps.
+ci-lite:
+	npm run lint          # python: ruff check .        flutter: flutter analyze
+	npm run typecheck     # python: mypy .              flutter: (covered by analyze)
+	npm test              # python: pytest -q           flutter: flutter test
+
+# Full gate: run before merging anything non-trivial. Adds build + integration + slow paths.
+ci: ci-lite
+	npm run build         # python: (package build / import smoke)   flutter: flutter build
+	# Add the slow steps a fast loop shouldn't pay for every time:
+	#   integration tests, end-to-end, a UI render/screenshot check, data-pipeline runs.
+	@echo "make ci: PASS"
