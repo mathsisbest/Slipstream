@@ -6,10 +6,12 @@ Deterministic guardrails that fire *inside* the agent loop, before a change land
 
 | Hook | Event | What it does |
 |---|---|---|
-| `guard-write.sh` | PreToolUse (Write/Edit) | Denies writes to `.env`, `auth/`, `migrations/`, private keys; denies content that looks like a secret/API key |
-| `guard-bash.sh` | PreToolUse (Bash) | Denies destructive / pipe-to-shell commands; asks before installing a new dependency |
+| `guard-write.sh` | PreToolUse (Write/Edit) | Denies writes to env files (`.env*`, `.envrc`), `auth/`, `migrations/`, and private-key paths (`.pem`, `.key`, `id_rsa`/`id_ed25519`/`id_ecdsa`/`id_dsa`); denies content matching known secret/token formats |
+| `guard-bash.sh` | PreToolUse (Bash) | Denies common destructive patterns (recursive force-`rm` of high-risk targets, `mkfs`, `dd if=`, `curl`/`wget` piped to a shell or `base64 -d`); asks before installing a new dependency |
 | `format-on-save.sh` | PostToolUse (Write/Edit) | Formats the touched file with your stack's formatter, if installed |
 | `notify-stop.sh` | Stop | Desktop notification when the agent finishes a turn (macOS) |
+
+These guards are **best-effort pattern matches, not a sandbox.** They stop the common accidents an agent is likely to emit; they do not catch every variant (e.g. unusual flag spellings, base64-obfuscated secrets, novel token formats). Treat them as one layer of defense-in-depth alongside your commit hooks and review — not a hard guarantee. See the comments in each script for exactly what's covered.
 
 ## Install
 
@@ -22,6 +24,20 @@ chmod +x hooks/*.sh
 ```
 
 `$CLAUDE_PROJECT_DIR` resolves to your project root. If your setup doesn't expand it, use absolute paths in the fragment. The scripts need `jq`.
+
+## Tests
+
+`hooks/tests/guards.test.sh` pipes sample tool payloads into the guards and asserts the decision (`allow` / `ask` / `deny`). Run it after editing a regex — it catches both new bypasses and over-broad false-positives:
+
+```bash
+bash hooks/tests/guards.test.sh
+```
+
+You can spot-check a single case the same way the hook is invoked:
+
+```bash
+printf '{"tool_input":{"command":"rm -fr /"}}' | bash hooks/guard-bash.sh
+```
 
 ## Design decisions (why these and not others)
 
@@ -37,8 +53,10 @@ You can extend `format-on-save.sh` to run a type-checker on the touched file and
 ```bash
 # in format-on-save.sh, for *.ts|*.tsx, after formatting:
 if command -v tsc >/dev/null 2>&1; then
-  errs=$(tsc --noEmit "$fp" 2>&1) || { echo "$errs" >&2; exit 2; }
+  errs=$(tsc --noEmit -p tsconfig.json 2>&1) || { echo "$errs" >&2; exit 2; }
 fi
 ```
+
+**Don't run `tsc --noEmit "$fp"` on a single file in a real project.** Checking one file in isolation drops the project's `tsconfig.json` (paths, lib, types, module resolution), so it reports spurious errors for anything that imports from elsewhere. Single-file mode only works for self-contained files with no project imports. For everything else, type-check the project (`tsc --noEmit -p tsconfig.json`, or your `npm run typecheck`) — slower, but the errors are real.
 
 Left out of the default because it slows the loop and only some projects want it.
