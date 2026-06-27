@@ -1,0 +1,41 @@
+# .github/workflows/ci.yml
+# Deterministic gate: lint + test on every PR.
+# Swap the "stack" block below for your project type.
+# Python:  replace the node steps with actions/setup-python + pip install + pytest
+# Flutter: replace with subosito/flutter-action + flutter test
+name: CI
+
+on:
+  pull_request:
+    branches: ["main", "master"]
+
+concurrency:          # cancel redundant runs on the same PR branch
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── STACK: Node/npm ────────────────────────────────────────────────────
+      # Swap this block per project:
+      #   Python  → actions/setup-python@v5  +  pip install -r requirements.txt
+      #   Flutter → subosito/flutter-action@v2  +  flutter pub get
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint        # swap: ruff check . / flutter analyze
+
+      - name: Test
+        run: npm test -- --ci    # swap: pytest / flutter test
+      # ──────────────────────────────────────────────────────────────────────

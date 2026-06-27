@@ -1,73 +1,60 @@
-# 🪔 Lighthouse
+# Slipstream
 
-**A drop-in starter kit that makes Claude Code and Codex work at high velocity from day one.**
+**A high-velocity starter kit for Claude Code and Codex.**
 
-Lighthouse isn't an app you install — it's a set of configs, workflows, gates, and playbooks you drop into any project so your agents plan before they build, build in isolation, prove themselves before a PR, and get adversarially reviewed before anything merges. The methodology of a principal engineer running a fleet, packaged so a newcomer inherits it on day one.
+Slipstream is a set of configs, workflows, and gates you drop into a repo so your coding agents plan before they build, work in isolation, prove themselves before opening a PR, and get reviewed before anything merges. It is the working setup of someone who runs a fleet of agents, packaged so you inherit it on day one instead of assembling it over six months.
 
-> Runs *inside* the Claude Code / Codex you already use. No new app, no API key, no metered cost — it rides entirely on your own subscription-authenticated CLI.
+It runs inside the Claude Code or Codex you already have. No app to install, no API key, no metered cost. It rides on your existing subscription.
 
----
+> **Public source, not open source.** You may read this repository for reference. You may not copy, modify, or redistribute it without written permission. See [LICENSE](LICENSE).
 
-## Status
+## Why it exists
 
-> ⚠️ **Public source, not open source.** This repository is made publicly visible for reference and transparency. It is **proprietary — all rights reserved** (see [LICENSE](LICENSE)). You may read it; you may not copy, modify, redistribute, or use it without written permission.
+Agents write code fast and judge their own work poorly. Left alone they produce confident, plausible changes that quietly break things. Slipstream wraps them in a workflow that makes a change earn its way to your main branch: a frozen plan, isolated work, a gate it cannot skip, and a review it did not write itself.
 
-Early scaffold. The feature set below is the build plan; each lands as its own reviewed PR.
+## The loop
 
----
+```
+describe  →  plan  →  build (isolated)  →  gate  →  review  →  you merge
+```
+
+You describe what you want. An agent grounds itself and writes a plan you approve before it touches code. Work happens in a git worktree so parallel agents never collide. Each change runs your gate (lint, types, tests) before it becomes a PR. A fresh agent reviews the diff it didn't write. You merge. Nothing merges itself.
+
+## Quickstart
+
+```bash
+git clone https://github.com/mathsisbest/Slipstream.git
+cd Slipstream
+bin/doctor.sh          # checks git, claude/codex, node; flags the metered-billing trap
+```
+
+Then copy the pieces you want into your own project. Full walkthrough, including your first reviewed PR in about ten minutes: [docs/QUICKSTART.md](docs/QUICKSTART.md).
 
 ## What's in the kit
 
-### 1. Agent configuration — *the brain*
-- Runtime-agnostic **`AGENTS.md`** (canonical) + a thin **`CLAUDE.md`** `@import` wrapper — one source of truth, works for both Claude Code and Codex.
-- Velocity defaults baked in: **model tiering** (Haiku for reads · Sonnet for building · Opus for genuine reasoning), **decomposition before parallelism**, **self-gate before every PR**, **worktree isolation**.
-- Kept under ~200 lines with modular `@import`s to dodge context rot.
+| Area | File(s) | What it does |
+|---|---|---|
+| **Agent config** | [AGENTS.md](AGENTS.md), [templates/CLAUDE.md](templates/CLAUDE.md) | One canonical instruction file with velocity defaults and `Always / Ask First / Never` boundaries; a thin `CLAUDE.md` that imports it |
+| **Fleet orchestrator** | [workflows/project-builder.js](workflows/project-builder.js) | Contract-first plan, file-disjoint build waves in worktrees, a self-gate, an adversarial review panel, then PRs. Plan-only by default |
+| **Quality gates** | [gates/](gates/) | A `ci.yml` and `Makefile` template per stack; a fast pre-PR gate and a full gate |
+| **Review** | [docs/REVIEW_GUIDE.md](docs/REVIEW_GUIDE.md) | A skeptical, fresh-context review checklist the reviewer runs against a diff it didn't write |
+| **Overnight loop** | [workflows/overnight-routine.md](workflows/overnight-routine.md) | A scheduled agent that picks one backlog issue, builds it, gates it, opens a PR, and stops |
+| **GitHub scaffolding** | [.github/](.github/) | PR template and issue templates (epic / slice / bug) |
+| **Memory** | [MEMORY.md](MEMORY.md), [memory/TEMPLATE.md](memory/TEMPLATE.md) | A persistent-fact pattern so corrections stick instead of resetting each session |
+| **Playbook** | [docs/PLAYBOOK.md](docs/PLAYBOOK.md), [docs/AGENT-CHEATSHEET.md](docs/AGENT-CHEATSHEET.md) | How to decompose, when to go parallel, model tiering, and the honest economics |
 
-### 2. The fleet orchestrator — *the engine*
-- **`project-builder`** workflow: contract-first plan → dependency-ordered waves of **file-disjoint** builders, each in its own git worktree → self-gate → **adversarial multi-lens review panel** → human merge. Nothing auto-merges.
-- Knobs: `planDepth` (one architect vs a ~15-agent deep planner), `reviewDepth` (light / standard / full), **plan-only safe default**.
-- Two modes, auto-detected: **flat** (a PR per task) and **integration** (dependency chains → one final PR).
+## How fast is "high velocity"
 
-### 3. Quality gates — *the no-mistakes layer*
-- `make ci` / `make ci-lite` **gate templates** per stack (Node · Python · Flutter) — fast pre-PR gate vs full gate.
-- Pre-commit / pre-push **hooks**: secret redaction, commit-identity enforcement, block-direct-to-main.
-- Self-verify-before-PR discipline with the gate evidence pasted into the PR body.
+Fast enough that decomposition and review become your bottleneck, not typing. The kit is built around that truth. The orchestrator runs build waves of around ten agents because the harness caps concurrency near sixteen and a subscription rate-limits you. "Hundreds of agents" means hundreds across the waves of a day, not at once. The gate and your review are the real constraint, and the kit is designed to keep both honest rather than to spawn more agents.
 
-### 4. Adversarial review — *the panel*
-- **`/review-pr`** command: skeptical, multi-lens review (correctness · security · contract · **honesty**).
-- **Fresh-context reviewer** discipline — the reviewer is never the implementer, and runs in its own worktree (no collusive self-validation).
-- A reusable `REVIEW_GUIDE` checklist + hard-constraint guardrails.
+## What it doesn't do
 
-### 5. Continuous & overnight loops — *always-on*
-- An **overnight Routine** prompt: fresh context per iteration, a rolling `notes.md` journal the next run reads, natural-language "stop-when", automatic rollback on failure.
-- A mandatory **safety envelope**: max-iterations, per-run cost ceiling, an always-visible kill switch, dry-run by default.
+It won't merge for you. It won't write the hard last twenty percent (real edge cases, security hardening, performance work) where agent throughput collapses. Use it to get a scoped feature or an MVP to a reviewed PR quickly, then harden by hand. It assumes you review what you merge.
 
-### 6. GitHub scaffolding — *the delivery rails*
-- Reusable **`ci.yml`** (docs path-ignore · draft-skip · concurrency-cancel).
-- **PR template** + **issue templates** (epic / slice / bug).
-- A branch-and-PR workflow designed for GUI-first review.
+## Economics
 
-### 7. Memory discipline — *persistent context*
-- A `MEMORY.md` index + per-fact memory-file pattern (user · feedback · project · reference).
-- **Failure-to-memory** capture: turn a correction into a durable rule instead of a silent hand-patch.
-
-### 8. The playbook — *the teaching layer*
-- **Velocity playbook**: the walls of parallelism, the model-tiering table, the mechanism-picker (subagents · agent teams · parallel sessions · routines · actions).
-- **Agent cheat-sheet**: copy-paste trigger phrases, a roles table, the four rules for going parallel.
-- **Honest-economics guide**: subscription quota vs metered API, the ~16-concurrent cap, the `ANTHROPIC_API_KEY` billing gotcha.
-
-### 9. Quickstart + doctor — *day one*
-- A `doctor` script: checks `git` / `claude` / `codex` / `node` and flags the metered-billing gotcha.
-- A **"10-minute first reviewed PR"** quickstart that walks a newcomer from clone → fleet build → merged PR.
-
----
-
-## Roadmap
-
-Lighthouse's north star is a GUI layer on top of this kit — a watchable **merge gate**, a fleet board, and first-class continuous loops, **runtime-neutral across Claude Code and Codex**. The kit ships the methodology first; the visual layer comes once the methodology is proven. (Detailed product vision kept internally.)
-
----
+Driving the `claude` or `codex` CLI uses your subscription, not a metered API. The one trap: if `ANTHROPIC_API_KEY` is set in your environment, Claude Code uses it and bills you. The doctor script checks for this. Full detail in [docs/ECONOMICS.md](docs/ECONOMICS.md).
 
 ## Credits
 
-The gate / worktree-pool / overnight-loop / liaison-fleet patterns draw on the open-source agentic toolkit by **[Kun Cheng (`kunchenguid`)](https://github.com/kunchenguid)** — `treehouse`, `gnhf`, `no-mistakes`, `firstmate`. Lighthouse packages these ideas as a GUI-first, runtime-agnostic kit.
+The gate, worktree, overnight-loop, and single-liaison-with-a-visible-fleet patterns draw on the open-source agentic tools by [Kun Cheng (`kunchenguid`)](https://github.com/kunchenguid): `treehouse`, `gnhf`, `no-mistakes`, and `firstmate`. Slipstream adapts those ideas into a config-and-workflow kit that works across runtimes.
