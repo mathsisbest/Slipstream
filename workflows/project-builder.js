@@ -17,7 +17,7 @@ const goal       = (typeof A.goal === 'string' && A.goal.trim()) ? A.goal.trim()
 const repoPath   = A.repoPath || '.'
 const gateCmd    = A.gateCmd || 'make ci'
 // liteGateCmd: fast gate for code-only tasks (no pipeline). If omitted, ALL tasks use gateCmd.
-// Example: 'make ci-lite' for mmi, 'npm run lint' for convene, 'flutter analyze' for offline-games.
+// Example: 'make ci-lite' for a data project, 'npm run lint' for a Node app, 'flutter analyze' for a Flutter app.
 const liteGateCmd = (typeof A.liteGateCmd === 'string' && A.liteGateCmd.trim()) ? A.liteGateCmd.trim() : null
 // pipelinePatterns: file path substrings that indicate a task touches the data pipeline → forces gateCmd.
 // Defaults cover the common case; override per-project if needed.

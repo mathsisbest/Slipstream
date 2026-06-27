@@ -2,7 +2,7 @@
 
 This file exists so Claude Code and Codex read the same rules. The canonical instructions live in `AGENTS.md`; this imports them and adds the few Claude-specific bits.
 
-@../AGENTS.md
+@AGENTS.md
 
 ## When you compact this session
 
