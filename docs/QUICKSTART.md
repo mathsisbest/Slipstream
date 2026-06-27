@@ -1,6 +1,6 @@
 # Quickstart
 
-Goal: from a fresh clone to your first reviewed, merged PR in about ten minutes, with the gate visible the whole way.
+Goal: from a fresh clone to your first reviewed PR in about ten minutes, with the gate visible the whole way.
 
 ## 1. Check your environment
 
@@ -48,10 +48,16 @@ Implement it. Run the gate. Open a PR with the gate output in the body. Don't me
 
 ## 5. Review it with fresh eyes
 
-Open a separate session (a clean context, no memory of building it) and run the review checklist:
+Copy the review checklist into your project once:
+
+```bash
+cp docs/REVIEW_GUIDE.md /path/to/your/project/REVIEW_GUIDE.md
+```
+
+Then open a separate session (a clean context, no memory of building it) and run the review checklist:
 
 ```
-Review this PR against docs/REVIEW_GUIDE.md. Be skeptical. Report findings.
+Review this PR against REVIEW_GUIDE.md. Be skeptical. Report findings.
 ```
 
 A reviewer that just watched itself build the thing rubber-stamps it. A fresh one catches more.

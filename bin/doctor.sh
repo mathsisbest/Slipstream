@@ -28,16 +28,26 @@ else warn "node not found — needed only for workflows/project-builder.js"; fi
 
 # the billing trap
 if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-  warn "ANTHROPIC_API_KEY is set — Claude Code will use this key and BILL YOU per token"
-  warn "  unset it to use your subscription:  unset ANTHROPIC_API_KEY"
+  bad "ANTHROPIC_API_KEY is set — Claude Code may bill you per token (Claude Code only uses it in API mode)"
+  bad "  unset it to use your subscription:  unset ANTHROPIC_API_KEY"
   problems=$((problems+1))
 else
   ok "ANTHROPIC_API_KEY not set — runtime will use your subscription"
 fi
 
-# in a git repo?
-if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then ok "inside a git repository"
-else warn "not inside a git repository — run this from your project"; fi
+if [ -n "${OPENAI_API_KEY:-}" ]; then
+  bad "OPENAI_API_KEY is set — Codex may bill you per token (Codex only uses it in API mode)"
+  bad "  unset it to use your subscription:  unset OPENAI_API_KEY"
+  problems=$((problems+1))
+else
+  ok "OPENAI_API_KEY not set — runtime will use your subscription"
+fi
+
+# in a git repo? (only meaningful if git is installed)
+if command -v git >/dev/null 2>&1; then
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then ok "inside a git repository"
+  else warn "not inside a git repository — run this from your project"; fi
+fi
 
 echo
 if [ "$problems" -eq 0 ]; then

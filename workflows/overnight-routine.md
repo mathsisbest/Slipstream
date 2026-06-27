@@ -13,7 +13,7 @@ A scheduled agent that, while you sleep, picks one ready backlog issue, implemen
 
 ## Cost
 
-Routines draw your subscription quota until you hit the per-account daily cap, then stop. See [../docs/ECONOMICS.md](../docs/ECONOMICS.md).
+Routines draw from your shared rolling subscription pool — the same one everything else you run draws from. Overnight work drains it faster, and when you hit the limit you get throttled, not billed. See [../docs/ECONOMICS.md](../docs/ECONOMICS.md).
 
 ## Prompt template
 

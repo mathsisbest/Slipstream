@@ -1,6 +1,6 @@
 # Agent guide
 
-> This is the canonical instruction file for agents working in this repo. Keep it under ~200 lines. `CLAUDE.md` imports it, so Claude Code and Codex read the same rules. Replace the bracketed parts with your project's specifics and delete what doesn't apply.
+> This is the canonical instruction file for agents working in this repo. Keep it under ~200 lines. `CLAUDE.md` imports it so Claude Code picks up these rules; Codex reads `AGENTS.md` directly. Both get the same rules. Replace the bracketed parts with your project's specifics and delete what doesn't apply.
 
 ## Project
 
