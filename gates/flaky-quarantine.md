@@ -27,8 +27,10 @@ pytest -m "flaky_quarantine" --reruns 1 || true
 
 ```bash
 jest --testPathIgnorePatterns quarantine          # the gate
-jest quarantine --retries 1 || true               # informational
+jest quarantine || true                            # informational (see retry note below)
 ```
+
+> **Retry note.** Jest has **no native retry flag** (`--retries` is not a Jest option; with `|| true` the error is silently swallowed). For the single classifying retry, use `jest.retryTimes(1)` in a setup file or a plugin (e.g. `jest-retries`) — the same role `pytest-rerunfailures` plays above. Vitest *does* have a native flag: `vitest run quarantine --retry=1`.
 
 **Any stack** — the shape is the same: the gate runs the trusted suite; quarantined tests run in a separate, non-blocking step with exactly one retry that classifies the result.
 
