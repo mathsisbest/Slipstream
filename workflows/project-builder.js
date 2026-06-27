@@ -179,7 +179,11 @@ function validateWaveGraph(tasks) {
     const t = byId.get(id)
     for (const d of (t && Array.isArray(t.dependsOn) ? t.dependsOn : [])) {
       if (!byId.has(d)) continue
-      if (color.get(d) === 1) { cycles.push(path.concat(d).join(' -> ')); return true }
+      if (color.get(d) === 1) {
+        const full = path.concat(d)
+        cycles.push(full.slice(full.indexOf(d)).join(' -> '))   // trim the approach prefix; report the cycle itself
+        return true
+      }
       if (color.get(d) === 0 && dfs(d, path.concat(d))) return true
     }
     color.set(id, 2)

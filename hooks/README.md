@@ -7,7 +7,7 @@ Deterministic guardrails that fire *inside* the agent loop, before a change land
 | Hook | Event | What it does |
 |---|---|---|
 | `guard-write.sh` | PreToolUse (Write/Edit) | Denies writes to env files (`.env*`, `.envrc`), `auth/`, `migrations/`, and private-key paths (`.pem`, `.key`, `id_rsa`/`id_ed25519`/`id_ecdsa`/`id_dsa`); denies content matching known secret/token formats |
-| `guard-bash.sh` | PreToolUse (Bash) | Denies common destructive patterns (recursive force-`rm` of high-risk targets, `mkfs`, `dd if=`, `curl`/`wget` piped to a shell or `base64 -d`); asks before installing a new dependency |
+| `guard-bash.sh` | PreToolUse (Bash) | **Denies** the catastrophic/irreversible (recursive-force `rm` of `/`, `~`, `$HOME`, `..`, a bare `*`, or a system dir; `mkfs`; `dd if=`; a fetch piped into a shell). **Asks** about the recoverable-but-risky (recursive `rm` of a specific path like `/tmp/x` or `./dist`, a local `… \| bash`, or a new dependency install). Ordinary in-project cleanup (`rm -rf node_modules`) is allowed |
 | `format-on-save.sh` | PostToolUse (Write/Edit) | Formats the touched file with your stack's formatter, if installed |
 | `notify-stop.sh` | Stop | Desktop notification when the agent finishes a turn (macOS) |
 
