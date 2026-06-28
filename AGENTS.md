@@ -9,7 +9,7 @@ Slipstream is a high-velocity agent workflow starter kit: docs, shell hooks, Git
 - **Build:** `make ci`
 - **Test:** `bash hooks/tests/guards.test.sh`
 - **Gate (run before every PR):** `make ci`
-- **Run locally:** `bin/doctor.sh`
+- **Run locally:** `bin/slipstream doctor` and `bin/slipstream check`
 
 ## How to work here
 
