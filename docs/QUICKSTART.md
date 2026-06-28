@@ -71,5 +71,6 @@ If the gate is green and the review is clean, you merge. That's the only step th
 
 - Run a whole feature as a fleet: [PROJECT_BUILDER.md](PROJECT_BUILDER.md).
 - Use the CLI control plane: [CLI.md](CLI.md).
+- Open the local dashboard: [DASHBOARD.md](DASHBOARD.md).
 - Let an agent work the backlog overnight: [../workflows/overnight-routine.md](../workflows/overnight-routine.md).
 - Understand the tradeoffs before you scale up: [PLAYBOOK.md](PLAYBOOK.md) and [ECONOMICS.md](ECONOMICS.md).
