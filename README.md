@@ -35,7 +35,7 @@ Then copy the pieces you want into your own project. Full walkthrough, including
 | Area | File(s) | What it does |
 |---|---|---|
 | **Agent config** | [AGENTS.md](AGENTS.md), [templates/CLAUDE.md](templates/CLAUDE.md) | One canonical instruction file with velocity defaults and `Always / Ask First / Never` boundaries; a thin `CLAUDE.md` that imports it |
-| **Fleet orchestrator** | [workflows/project-builder.js](workflows/project-builder.js) | Contract-first plan, file-disjoint build waves in worktrees, a self-gate, an adversarial review panel, then PRs. Plan-only by default |
+| **Fleet orchestrator** | [workflows/project-builder.js](workflows/project-builder.js), [docs/PROJECT_BUILDER.md](docs/PROJECT_BUILDER.md) | Contract-first plan, file-disjoint build waves in worktrees, a self-gate, an adversarial review panel, then PRs. Plan-only by default |
 | **Quality gates** | [gates/](gates/) | A `ci.yml` and `Makefile` template per stack; a fast pre-PR gate and a full gate |
 | **Review** | [docs/REVIEW_GUIDE.md](docs/REVIEW_GUIDE.md) | A skeptical, fresh-context review checklist the reviewer runs against a diff it didn't write |
 | **Overnight loop** | [workflows/overnight-routine.md](workflows/overnight-routine.md) | A scheduled agent that picks one backlog issue, builds it, gates it, opens a PR, and stops |

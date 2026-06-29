@@ -42,11 +42,22 @@ const maxWave    = A.maxWaveWidth || 10
 const planOnly   = !(A.execute === true)
 // reviewDepth: 'light'=1 lens sonnet/high (prototype), 'standard'=2 lenses opus/high (DEFAULT), 'full'=3 lenses opus/max (critical prod)
 const reviewDepth = (A.reviewDepth === 'light' || A.reviewDepth === 'full') ? A.reviewDepth : 'standard'
-// commitIdentity: the git author for builder commits + integration merges. Defaults to the repo owner
-// to preserve current behavior; pass args.commitIdentity to reuse this kit under your own identity.
+// commitIdentity: optional git author for builder commits + integration merges. If omitted, builders
+// use the repo/worktree git config instead of inheriting Slipstream's author.
 const commitIdentity = (typeof A.commitIdentity === 'string' && A.commitIdentity.trim())
   ? A.commitIdentity.trim()
-  : 'mathsisbest <33107428+mathsisbest@users.noreply.github.com>' // ← swap for your identity
+  : null
+const commitInstruction = commitIdentity
+  ? `Commit authored as ${commitIdentity}.`
+  : 'Commit with the repository\'s configured git user; do not invent or hard-code an author.'
+const mergeAuthorInstruction = commitIdentity
+  ? `authoring merges as ${commitIdentity}`
+  : 'using the integration worktree\'s configured git user'
+
+function slugify(value, fallback, maxLen) {
+  const s = String(value || '').toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, maxLen)
+  return s || fallback
+}
 
 // Fail fast (and surface what actually arrived) rather than inventing a goal.
 if (!goal) {
@@ -54,7 +65,23 @@ if (!goal) {
            argsType: typeof args, argsSeen: args === undefined ? 'undefined' : (typeof args === 'string' ? String(args).slice(0, 200) : Object.keys(A)) }
 }
 
-log(`project-builder | goal="${goal}" | repo=${repoPath} | gate="${gateCmd}"${liteGateCmd ? ' | liteGate="'+liteGateCmd+'"' : ''} | mode=${planOnly ? 'PLAN-ONLY (no changes)' : 'EXECUTE (opens PRs)'} | reviewDepth=${reviewDepth}`)
+const slug = slugify(goal, 'build', 40)
+const rawRunStamp = (typeof A.runStamp === 'string' && A.runStamp.trim()) ? A.runStamp.trim() : null
+if (!planOnly && !rawRunStamp) {
+  return {
+    ok: false,
+    stage: 'args',
+    error: 'RUN_STAMP_REQUIRED',
+    note: 'Execute mode needs args.runStamp (for example 20260628-1430) so branch/worktree names are unique and no production run force-pushes over another.',
+  }
+}
+const runStamp = rawRunStamp ? slugify(rawRunStamp, slug, 24) : slug
+const integrationBranch = `pb/${runStamp}`
+function taskToken(id) { return slugify(id, 'task', 48) }
+function builderBranch(id) { return `pb/${runStamp}/builder/${taskToken(id)}` }
+function builderWorktree(id) { return `/tmp/pb-${runStamp}-${taskToken(id)}` }
+
+log(`project-builder | goal="${goal}" | repo=${repoPath} | gate="${gateCmd}"${liteGateCmd ? ' | liteGate="'+liteGateCmd+'"' : ''} | mode=${planOnly ? 'PLAN-ONLY (no changes)' : 'EXECUTE (opens PRs)'} | reviewDepth=${reviewDepth} | run=${runStamp}`)
 
 // ========== Phase 1: ARCHITECT — lock contracts + dependency-ordered task graph ==========
 phase('Architect')
@@ -158,9 +185,28 @@ log(`Architect done: ${plan.tasks.length} tasks across ${waveNums.length} wave(s
 function validateWaveGraph(tasks) {
   const issues = []
   const byId = new Map()
+  const tokenOwners = new Map()
   for (const t of tasks) {
     if (byId.has(t.id)) issues.push(`duplicate task id "${t.id}"`)
     byId.set(t.id, t)
+    const token = taskToken(t.id)
+    if (tokenOwners.has(token)) issues.push(`task ids "${tokenOwners.get(token)}" and "${t.id}" collapse to the same branch/path token "${token}"`)
+    tokenOwners.set(token, t.id)
+  }
+  const filesByWave = new Map()
+  for (const t of tasks) {
+    const wave = Number(t.wave)
+    if (!Number.isInteger(wave) || wave < 1) issues.push(`task ${t.id} has invalid wave "${t.wave}"`)
+    if (!Array.isArray(t.files) || t.files.length === 0) {
+      issues.push(`task ${t.id} has no owned files; file ownership is required before execute`)
+      continue
+    }
+    const owners = filesByWave.get(wave) || new Map()
+    for (const f of t.files) {
+      if (owners.has(f)) issues.push(`same-wave file collision in wave ${wave}: "${f}" owned by both ${owners.get(f)} and ${t.id}`)
+      owners.set(f, t.id)
+    }
+    filesByWave.set(wave, owners)
   }
   for (const t of tasks) {
     for (const d of (Array.isArray(t.dependsOn) ? t.dependsOn : [])) {
@@ -280,14 +326,6 @@ Return lens="${L.k}" and solid=true ONLY if you find no real ${L.k} issue; other
 // in integration mode even if the architect flattened everything into one wave number.
 const hasDeps = plan.tasks.some((t) => Array.isArray(t.dependsOn) && t.dependsOn.length > 0)
 const multiWave = hasDeps || waveNums.length > 1
-const slug = (goal.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)) || 'build'
-// Run-unique token so worktree paths + the integration branch don't collide on a re-run after a crash
-// (git worktree add hard-errors if the path exists). Date.now()/Math.random() are unavailable in Workflow
-// scripts, so accept a stamp via args.runStamp (e.g. a timestamp) and otherwise fall back to the goal slug.
-const runStamp = (typeof A.runStamp === 'string' && A.runStamp.trim())
-  ? (A.runStamp.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24) || slug)
-  : slug
-const integrationBranch = `pb/${runStamp}`
 const buildBase = multiWave ? integrationBranch : baseBranch
 
 // Tiny ok/detail schema reused by the integration-init + per-wave integrator so success is verifiable.
@@ -298,8 +336,8 @@ if (multiWave) {
   const initRes = await agent(
 `Set up a FRESH integration branch for a multi-wave build. Do NOT touch the main clone's current checkout. In repo ${repoPath} run:
   git -C ${repoPath} fetch origin ${baseBranch} -q
-  git -C ${repoPath} branch -f ${integrationBranch} origin/${baseBranch}
-  git -C ${repoPath} push -f origin ${integrationBranch}
+  git -C ${repoPath} branch ${integrationBranch} origin/${baseBranch}
+  git -C ${repoPath} push origin ${integrationBranch}
 Then verify the branch exists on origin (git -C ${repoPath} ls-remote --exit-code origin ${integrationBranch}).
 Return ok=true only if that verification succeeds; otherwise ok=false with detail.`,
     { label: 'integration-init', phase: 'Build', schema: OK_SCHEMA, model: 'sonnet', effort: 'low' })
@@ -348,16 +386,16 @@ ${plan.contracts}
 
 ISOLATION + DELIVERY:
 1. git -C ${repoPath} fetch origin ${buildBase} -q
-2. git -C ${repoPath} worktree remove --force /tmp/pb-${runStamp}-${t.id} 2>/dev/null || true
-   git -C ${repoPath} worktree add -B builder/${t.id} /tmp/pb-${runStamp}-${t.id} origin/${buildBase}
-3. Work ONLY in /tmp/pb-${runStamp}-${t.id}, editing only your owned files.
+2. git -C ${repoPath} worktree remove --force ${builderWorktree(t.id)} 2>/dev/null || true
+   git -C ${repoPath} worktree add -B ${builderBranch(t.id)} ${builderWorktree(t.id)} origin/${buildBase}
+3. Work ONLY in ${builderWorktree(t.id)}, editing only your owned files.
 4. Run the gate (${selectGate(t.files)}). A fresh worktree may need its venv/deps installed first. Fix root causes (<=3 tries); never skip or suppress.
-5. Commit authored as ${commitIdentity}, conventional title. Push branch builder/${t.id}.
+5. ${commitInstruction} Use a conventional title. Push branch ${builderBranch(t.id)}.
 ${multiWave
   ? `6. DO NOT open a PR (integration mode) — just push the branch; it will be merged into ${integrationBranch}.`
   : `6. Open a PR with gh against ${baseBranch} (structured body + gate result). DO NOT merge.`}
-7. git -C ${repoPath} worktree remove --force /tmp/pb-${runStamp}-${t.id}
-Return taskId, gatePassed, and ref (${multiWave ? 'the pushed branch name' : 'the PR url'}).`,
+7. git -C ${repoPath} worktree remove --force ${builderWorktree(t.id)}
+Return taskId, gatePassed, and ref (${multiWave ? `the exact pushed branch name: ${builderBranch(t.id)}` : 'the PR url'}).`,
       { label: `build:${t.id}`, phase: 'Build', schema: BUILD_SCHEMA, model: 'sonnet', effort: 'medium' }
     )
   ))
@@ -392,8 +430,8 @@ Return taskId, gatePassed, and ref (${multiWave ? 'the pushed branch name' : 'th
   git -C ${repoPath} fetch origin -q
   git -C ${repoPath} worktree remove --force /tmp/pb-int-${runStamp}-${w} 2>/dev/null || true
   git -C ${repoPath} worktree add -B ${integrationBranch} /tmp/pb-int-${runStamp}-${w} origin/${integrationBranch}
-Then, inside /tmp/pb-int-${runStamp}-${w}, merge these file-disjoint branches IN ORDER (no conflicts expected), authoring merges as ${commitIdentity}, and push ${integrationBranch}:
-${merging.map((id) => `  - origin/builder/${id}`).join('\n')}
+Then, inside /tmp/pb-int-${runStamp}-${w}, merge these file-disjoint branches IN ORDER (no conflicts expected), ${mergeAuthorInstruction}, and push ${integrationBranch}:
+${merging.map((id) => `  - origin/${builderBranch(id)}`).join('\n')}
 Finally: git -C ${repoPath} worktree remove --force /tmp/pb-int-${runStamp}-${w}. Return ok=true only if every branch merged AND the push succeeded; otherwise ok=false with detail.`,
         { label: `integrate:wave${w}`, phase: 'Build', schema: OK_SCHEMA, model: 'sonnet', effort: 'medium' })
       if (integRes && integRes.ok === true) {

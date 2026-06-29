@@ -12,6 +12,7 @@
 | Review | `Review #<n> against docs/REVIEW_GUIDE.md. Be skeptical.` | Findings and a verdict |
 | Fan out reads | `Spawn parallel subagents to research A, B, C and summarise.` | Parallel read-only reports |
 | Parallel edits | `Spawn N teammates for tasks 1–N; each owns its files, gates, opens its own PR.` | Independent PRs |
+| Fleet build | `Run workflows/project-builder.js in plan-only mode for <goal>.` | Contracts + waved task graph |
 | Overnight | Create a scheduled routine; paste `workflows/overnight-routine.md` | A scheduled run |
 | Hard problem | Add `think hard` to the prompt | Extended reasoning |
 
