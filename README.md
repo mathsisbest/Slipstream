@@ -6,7 +6,7 @@ Slipstream is a set of configs, workflows, and gates you drop into a repo so you
 
 It runs inside the Claude Code or Codex you already have. No app to install, no API key, no metered cost. It rides on your existing subscription.
 
-> **Public source, not open source.** You may read this repository for reference. You may not copy, modify, or redistribute it without written permission. See [LICENSE](LICENSE).
+> **Open source.** Slipstream is available under the MIT License. Use it, adapt it, and ship with it. See [LICENSE](LICENSE).
 
 ## Why it exists
 
