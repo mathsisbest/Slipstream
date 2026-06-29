@@ -7,6 +7,7 @@
 | Intent | Say this | What you get |
 |---|---|---|
 | Plan / decompose | `Plan only: numbered list of independent tasks + the files each touches. No code.` | A scoped task list, no edits |
+| Check readiness | `Run bin/slipstream check and fix any failed production-readiness checks.` | Repo workflow audit |
 | Find / locate | `Just find where X is / how X works. Don't change anything.` | A read-only trace |
 | Build one thing | `Implement <thing>. Gate it, open a PR, don't merge.` | A PR ready for review |
 | Review | `Review #<n> against docs/REVIEW_GUIDE.md. Be skeptical.` | Findings and a verdict |

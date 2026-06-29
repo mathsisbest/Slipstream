@@ -26,17 +26,23 @@ You describe what you want. An agent grounds itself and writes a plan you approv
 git clone https://github.com/mathsisbest/Slipstream.git
 cd Slipstream
 bin/doctor.sh          # checks git, claude/codex, node; flags the metered-billing trap
+bin/slipstream doctor  # richer CLI doctor
+bin/slipstream init /path/to/your/project --stack node --with-claude-hooks
+bin/slipstream check /path/to/your/project
 ```
 
-Then copy the pieces you want into your own project. Full walkthrough, including your first reviewed PR in about ten minutes: [docs/QUICKSTART.md](docs/QUICKSTART.md).
+Use `--stack python` or `--stack flutter` for those project types. Omit `--with-claude-hooks` if you are not using Claude Code hooks. Full walkthrough, including your first reviewed PR in about ten minutes: [docs/QUICKSTART.md](docs/QUICKSTART.md).
 
 ## What's in the kit
 
 | Area | File(s) | What it does |
 |---|---|---|
+| **Installer** | [bin/slipstream](bin/slipstream) | Scaffolds AGENTS/CLAUDE config, Makefile gate, GitHub CI, PR/issue templates, review guide, and optional Claude Code hooks into a target repo |
+| **CLI control plane** | [bin/slipstream](bin/slipstream), [docs/CLI.md](docs/CLI.md) | `doctor`, `init`, `check`, `plan`, `run`, and `status` commands for operating the workflow |
 | **Agent config** | [AGENTS.md](AGENTS.md), [templates/CLAUDE.md](templates/CLAUDE.md) | One canonical instruction file with velocity defaults and `Always / Ask First / Never` boundaries; a thin `CLAUDE.md` that imports it |
 | **Fleet orchestrator** | [workflows/project-builder.js](workflows/project-builder.js), [docs/PROJECT_BUILDER.md](docs/PROJECT_BUILDER.md) | Contract-first plan, file-disjoint build waves in worktrees, a self-gate, an adversarial review panel, then PRs. Plan-only by default |
 | **Quality gates** | [gates/](gates/) | A `ci.yml` and `Makefile` template per stack; a fast pre-PR gate and a full gate |
+| **Claude Code hooks** | [hooks/](hooks/) | Optional in-loop guards for Claude Code. Codex still uses the shared AGENTS instructions, gate, CI, and review loop |
 | **Review** | [docs/REVIEW_GUIDE.md](docs/REVIEW_GUIDE.md) | A skeptical, fresh-context review checklist the reviewer runs against a diff it didn't write |
 | **Overnight loop** | [workflows/overnight-routine.md](workflows/overnight-routine.md) | A scheduled agent that picks one backlog issue, builds it, gates it, opens a PR, and stops |
 | **GitHub scaffolding** | [.github/](.github/) | PR template and issue templates (epic / slice / bug) |

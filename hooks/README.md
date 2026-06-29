@@ -1,6 +1,8 @@
-# In-loop hooks
+# Claude Code In-Loop Hooks
 
-Deterministic guardrails that fire *inside* the agent loop, before a change lands. Your git pre-commit hooks only catch things at commit time; these catch them at the moment the agent acts. They make the kit's rules (no secrets, no protected-path writes, clean formatting) enforced by code rather than by hoping the agent read its instructions.
+Deterministic guardrails that fire *inside* the Claude Code agent loop, before a change lands. Your git pre-commit hooks only catch things at commit time; these catch them at the moment the agent acts. They make the kit's rules (no secrets, no protected-path writes, clean formatting) enforced by code rather than by hoping the agent read its instructions.
+
+These hooks are Claude Code-specific because they install through `.claude/settings.json`. Codex users still use Slipstream's shared `AGENTS.md`, Makefile gate, GitHub CI, PR template, and fresh-context review loop; do not assume these hook scripts run inside Codex unless your Codex environment has an equivalent hook mechanism wired in.
 
 ## What's here
 
@@ -15,7 +17,13 @@ These guards are **best-effort pattern matches, not a sandbox.** They stop the c
 
 ## Install
 
-Merge `settings.fragment.json` into your project's `.claude/settings.json` (under the `hooks` key), then make the scripts executable:
+The easiest path is the Slipstream installer:
+
+```bash
+bin/slipstream init /path/to/your/project --stack node --with-claude-hooks
+```
+
+For manual install, merge `settings.fragment.json` into your project's `.claude/settings.json` (under the `hooks` key), then make the scripts executable:
 
 ```bash
 mkdir -p .claude
