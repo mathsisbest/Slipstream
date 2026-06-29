@@ -1,15 +1,15 @@
-# Agent guide
+# Agent Guide
 
-> This is the canonical instruction file for agents working in this repo. Keep it under ~200 lines. `CLAUDE.md` imports it so Claude Code picks up these rules; Codex reads `AGENTS.md` directly. Both get the same rules. Replace the bracketed parts with your project's specifics and delete what doesn't apply.
+> This is the canonical instruction file for agents working in this repo. Keep it under ~200 lines. `CLAUDE.md` imports it so Claude Code picks up these rules; Codex reads `AGENTS.md` directly. Both get the same rules.
 
 ## Project
 
-[One or two sentences: what this project is and the stack. Keep it short — agents read the code for structure, not this file.]
+Slipstream is a high-velocity agent workflow starter kit: docs, shell hooks, GitHub templates, and a JavaScript workflow script for coordinating coding agents.
 
-- **Build:** `[command]`
-- **Test:** `[command]`
-- **Gate (run before every PR):** `[make ci, or npm run lint && npm test, or pytest, etc.]`
-- **Run locally:** `[command]`
+- **Build:** `make ci`
+- **Test:** `bash hooks/tests/guards.test.sh`
+- **Gate (run before every PR):** `make ci`
+- **Run locally:** `bin/doctor.sh`
 
 ## How to work here
 
