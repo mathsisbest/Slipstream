@@ -29,6 +29,7 @@ bin/doctor.sh          # checks git, claude/codex, node; flags the metered-billi
 bin/slipstream doctor  # richer CLI doctor
 bin/slipstream init /path/to/your/project --stack node --with-claude-hooks
 bin/slipstream check /path/to/your/project
+bin/slipstream dashboard --repo /path/to/your/project
 ```
 
 Use `--stack python` or `--stack flutter` for those project types. Omit `--with-claude-hooks` if you are not using Claude Code hooks. Full walkthrough, including your first reviewed PR in about ten minutes: [docs/QUICKSTART.md](docs/QUICKSTART.md).
@@ -38,7 +39,8 @@ Use `--stack python` or `--stack flutter` for those project types. Omit `--with-
 | Area | File(s) | What it does |
 |---|---|---|
 | **Installer** | [bin/slipstream](bin/slipstream) | Scaffolds AGENTS/CLAUDE config, Makefile gate, GitHub CI, PR/issue templates, review guide, and optional Claude Code hooks into a target repo |
-| **CLI control plane** | [bin/slipstream](bin/slipstream), [docs/CLI.md](docs/CLI.md) | `doctor`, `init`, `check`, `plan`, `run`, and `status` commands for operating the workflow |
+| **CLI control plane** | [bin/slipstream](bin/slipstream), [docs/CLI.md](docs/CLI.md) | `doctor`, `init`, `check`, `plan`, `run`, `status`, and `dashboard` commands for operating the workflow |
+| **Local dashboard** | [docs/DASHBOARD.md](docs/DASHBOARD.md) | Browser view of repo readiness, Slipstream runs, branches, and open PRs |
 | **Agent config** | [AGENTS.md](AGENTS.md), [templates/CLAUDE.md](templates/CLAUDE.md) | One canonical instruction file with velocity defaults and `Always / Ask First / Never` boundaries; a thin `CLAUDE.md` that imports it |
 | **Fleet orchestrator** | [workflows/project-builder.js](workflows/project-builder.js), [docs/PROJECT_BUILDER.md](docs/PROJECT_BUILDER.md) | Contract-first plan, file-disjoint build waves in worktrees, a self-gate, an adversarial review panel, then PRs. Plan-only by default |
 | **Quality gates** | [gates/](gates/) | A `ci.yml` and `Makefile` template per stack; a fast pre-PR gate and a full gate |

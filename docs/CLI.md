@@ -11,6 +11,7 @@ bin/slipstream check [PATH] [--json] [--run-gate] [--expect-hooks]
 bin/slipstream plan --repo PATH --goal TEXT [--run-stamp ID] [--workflow-command CMD|--runtime codex]
 bin/slipstream run --repo PATH --run-stamp ID --execute [--workflow-command CMD|--runtime codex]
 bin/slipstream status [PATH] [--json]
+bin/slipstream dashboard [--repo PATH] [--port 7331]
 ```
 
 ## What Each Command Does
@@ -23,6 +24,7 @@ bin/slipstream status [PATH] [--json]
 | `plan` | Creates a `.slipstream/runs/<runStamp>/run.json` record with project-builder plan-only args. With `--runtime codex`, it asks Codex for a real plan in read-only mode. With `--workflow-command`, it sends args to your adapter on stdin and in `SLIPSTREAM_ARGS_JSON`. |
 | `run` | Executes a saved plan only when `--execute` is present. With `--runtime codex`, it runs Codex in workspace-write mode. With no runtime or workflow command, it records `needs-workflow-command` instead of pretending work ran. |
 | `status` | Shows repo readiness, git state, Slipstream run records, `pb/` branches, and open PRs when `gh` is available. |
+| `dashboard` | Starts a local browser dashboard backed by the same `status` and `check` data. |
 
 ## Built-In Codex Runtime
 
@@ -61,7 +63,7 @@ The adapter receives the JSON args in two places:
 - stdin
 - `SLIPSTREAM_ARGS_JSON`
 
-This keeps Slipstream portable across Claude Code, Codex, and other workflow runners. If no adapter or runtime is supplied, the run state is still saved and visible in `status`.
+This keeps Slipstream portable across Claude Code, Codex, and other workflow runners. If no adapter or runtime is supplied, the run state is still saved and visible in `status` and the dashboard.
 
 ## Local State
 

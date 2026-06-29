@@ -43,4 +43,10 @@ check "workflow adapter plan" bash -c '"$1" plan --repo "$2" --goal "Adapter pla
 check "run requires adapter but records state" bash -c '"$1" run --repo "$2" --run-stamp cli-smoke --execute --json | jq -e ".status == \"needs-workflow-command\" and .projectBuilderArgs.execute == true" >/dev/null' _ "$ROOT/bin/slipstream" "$repo"
 check "status json" bash -c '"$1" status "$2" --json | jq -e ".runs[0].runStamp == \"cli-smoke\"" >/dev/null' _ "$ROOT/bin/slipstream" "$repo"
 
+"$ROOT/bin/slipstream" dashboard --repo "$repo" --port 7339 >"$TMP/dashboard.log" 2>&1 &
+DASH_PID=$!
+sleep 1
+check "dashboard html" bash -c "curl -fsS http://127.0.0.1:7339/ | grep -q 'Slipstream Dashboard'"
+check "dashboard api" bash -c 'curl -fsS "http://127.0.0.1:7339/api/status?repo=$1" | jq -e ".runs[0].status == \"needs-workflow-command\"" >/dev/null' _ "$repo"
+
 printf '\033[32mAll %d CLI smoke checks passed.\033[0m\n' "$pass"
